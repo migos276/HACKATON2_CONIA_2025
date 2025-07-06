@@ -1,57 +1,44 @@
-# 🍽️ API de Reconnaissance de Plats Traditionnels Africains
+# 🍽️ AfriFood AI - Application Dockerisée
 
-Une API Flask intelligente utilisant TensorFlow pour identifier automatiquement les plats traditionnels africains à partir d'images. Le système peut reconnaître 6 plats emblématiques avec des informations culturelles détaillées.
+Une application Flask intelligente utilisant TensorFlow pour identifier automatiquement les plats traditionnels africains à partir d'images, maintenant avec base de données SQLite et support Docker.
 
-## 📋 Table des Matières
-
-- [Fonctionnalités](#fonctionnalités)
-- [Plats Reconnus](#plats-reconnus)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Endpoints de l'API](#endpoints-de-lapi)
-- [Structure du Projet](#structure-du-projet)
-- [Déploiement](#déploiement)
-- [Contribution](#contribution)
-
-## ✨ Fonctionnalités
-
-- **Reconnaissance d'images** : Identification automatique de plats traditionnels africains
-- **Authentification utilisateur** : Système de connexion/inscription sécurisé
-- **Historique des prédictions** : Suivi des analyses précédentes
-- **Informations culturelles** : Détails sur l'origine, les ingrédients et l'histoire de chaque plat
-- **Interface web** : Dashboard interactif avec capture photo et upload de fichiers
-- **Statistiques utilisateur** : Analyse des habitudes de reconnaissance
-
-## 🥘 Plats Reconnus
-
-L'API peut identifier les plats suivants :
-
-| Plat | Origine | Description |
-|------|---------|-------------|
-| **Ekwang** | Cameroun | Tubercules de taro râpés enveloppés dans des feuilles |
-| **Eru (Okok)** | Cameroun | Feuilles d'eru sauvage avec viande et poisson fumé |
-| **Jollof Rice** | Ghana | Riz parfumé dans une sauce tomate épicée |
-| **Ndolé** | Cameroun | Plat national aux feuilles amères et arachides |
-| **Palm Nut Soup** | Afrique de l'Ouest | Soupe à l'huile de palme rouge |
-| **Waakye** | Ghana | Riz aux haricots avec feuilles de millet |
-
-## 🚀 Installation
+## 🚀 Démarrage Rapide avec Docker
 
 ### Prérequis
+- Docker et Docker Compose installés
+- Au moins 2GB de RAM libre
 
-- Python 3.8+
-- TensorFlow 2.x
-- Flask
-- Modèle pré-entraîné (`best_food_model.h5`)
-
-### Installation des dépendances
+### Lancement Simple
 
 ```bash
 # Cloner le repository
 git clone <your-repo-url>
 cd african-food-recognition-api
 
+# Construire et démarrer l'application
+docker-compose up --build
+
+# L'application sera accessible sur http://localhost:5000
+```
+
+### Lancement avec Nginx (Production)
+
+```bash
+# Démarrer avec le reverse proxy nginx
+docker-compose --profile production up --build
+
+# L'application sera accessible sur http://localhost
+```
+
+## 🛠️ Installation Locale
+
+### Prérequis
+- Python 3.9+
+- pip
+
+### Installation
+
+```bash
 # Créer un environnement virtuel
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
@@ -60,264 +47,235 @@ venv\Scripts\activate  # Windows
 
 # Installer les dépendances
 pip install -r requirements.txt
+
+# Créer un modèle factice (si pas de modèle réel)
+python create_dummy_model.py
+
+# Démarrer l'application
+chmod +x run.sh
+./run.sh
 ```
 
-### Fichier requirements.txt
+## 📊 Base de Données
 
-```txt
-Flask==2.3.3
-tensorflow==2.13.0
-Pillow==10.0.0
-numpy==1.24.3
-Werkzeug==2.3.7
+L'application utilise maintenant SQLite pour la persistance des données :
+
+- **users** : Stockage des comptes utilisateurs
+- **predictions** : Historique des analyses d'images
+
+La base de données est automatiquement créée au premier démarrage.
+
+## 🐳 Configuration Docker
+
+### Variables d'Environnement
+
+```bash
+# Dans docker-compose.yml ou .env
+SECRET_KEY=your-super-secret-key
+FLASK_ENV=production
+PORT=5000
 ```
 
-## ⚙️ Configuration
+### Volumes Persistants
 
-### 1. Modèle de Machine Learning
+- `./uploads:/app/uploads` - Images temporaires
+- `./afrifood.db:/app/afrifood.db` - Base de données SQLite
 
-Placez votre modèle pré-entraîné dans le répertoire racine :
-```
-best_food_model.h5
-```
+## 🔧 Développement
 
-### 2. Configuration Flask
-
-Modifiez les paramètres dans le fichier principal :
-
-```python
-# Configuration
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-MODEL_PATH = 'best_food_model.h5'
-app.secret_key = 'votre_cle_secrete_ici'  # ⚠️ Changez en production
-```
-
-### 3. Structure des dossiers
+### Structure du Projet
 
 ```
 african-food-api/
 ├── app.py                 # Application principale
-├── best_food_model.h5     # Modèle TensorFlow
-├── uploads/               # Dossier temporaire (auto-créé)
-├── templates/             # Templates HTML
-│   ├── index.html
-│   ├── login.html
-│   ├── register.html
-│   ├── dashboard.html
-│   ├── plats_traditionnels.html
-│   ├── detail_plat.html
-│   └── historique.html
-├── static/               # Fichiers statiques (CSS, JS)
-├── requirements.txt
-└── README.md
+├── Dockerfile            # Configuration Docker
+├── docker-compose.yml    # Orchestration des services
+├── nginx.conf           # Configuration Nginx
+├── requirements.txt     # Dépendances Python
+├── create_dummy_model.py # Création de modèle factice
+├── run.sh              # Script de démarrage
+├── afrifood.db         # Base de données SQLite (auto-créée)
+├── uploads/            # Dossier temporaire
+└── templates/          # Templates HTML
 ```
 
-## 🎯 Usage
-
-### Démarrer l'API
+### Commandes Utiles
 
 ```bash
-python app.py
+# Voir les logs
+docker-compose logs -f
+
+# Redémarrer un service
+docker-compose restart afrifood-app
+
+# Accéder au conteneur
+docker-compose exec afrifood-app bash
+
+# Nettoyer les volumes
+docker-compose down -v
 ```
 
-L'API sera accessible sur `http://localhost:5000`
+## 🏥 Monitoring
 
-### Utilisation via Interface Web
+### Health Check
 
-1. **Inscription/Connexion** : Créez un compte ou connectez-vous
-2. **Dashboard** : Accédez au tableau de bord principal
-3. **Prédiction** : 
-   - Uploadez une image
-   - Ou prenez une photo avec la caméra
-4. **Résultats** : Consultez les prédictions avec informations culturelles
-5. **Historique** : Visualisez vos analyses précédentes
+L'application inclut un endpoint de santé :
 
-### Utilisation via API REST
-
-```python
-import requests
-import base64
-
-# Authentification
-session = requests.Session()
-login_data = {
-    'email': 'user@example.com',
-    'password': 'motdepasse'
-}
-session.post('http://localhost:5000/login', data=login_data)
-
-# Prédiction avec fichier
-with open('image_plat.jpg', 'rb') as f:
-    files = {'file': f}
-    response = session.post('http://localhost:5000/predict', files=files)
-    result = response.json()
-
-print(f"Plat prédit: {result['predicted_class']}")
-print(f"Confiance: {result['confidence']:.2f}%")
+```bash
+curl http://localhost:5000/health
 ```
 
-## 🔗 Endpoints de l'API
-
-### Authentification
-
-| Endpoint | Méthode | Description |
-|----------|---------|-------------|
-| `/login` | POST | Connexion utilisateur |
-| `/register` | POST | Inscription utilisateur |
-| `/logout` | GET | Déconnexion |
-
-### Prédiction
-
-| Endpoint | Méthode | Description |
-|----------|---------|-------------|
-| `/predict` | POST | Analyse d'image (fichier ou base64) |
-
-**Exemple de réponse :**
+Réponse :
 ```json
 {
-  "predicted_class": "ndole",
-  "confidence": 95.67,
-  "plat_info": {
-    "nom": "Ndolé",
-    "description": "Plat national du Cameroun...",
-    "origine": "Cameroun",
-    "ingredients": ["Feuilles de ndolé", "Arachides grillées", ...]
-  },
-  "all_predictions": {
-    "ekwang": 0.02,
-    "eru": 0.01,
-    "jollof-ghana": 0.01,
-    "ndole": 0.96,
-    "palm-nut-soup": 0.00,
-    "waakye": 0.00
-  }
+  "status": "healthy",
+  "model_loaded": true
 }
 ```
 
-### Données Utilisateur
-
-| Endpoint | Méthode | Description |
-|----------|---------|-------------|
-| `/historique` | GET | Historique des prédictions |
-| `/api/user-stats` | GET | Statistiques utilisateur |
-
-### Informations Culturelles
-
-| Endpoint | Méthode | Description |
-|----------|---------|-------------|
-| `/plats-traditionnels` | GET | Liste des plats avec infos |
-| `/plat/<nom_plat>` | GET | Détails d'un plat spécifique |
-
-## 🏗️ Structure du Projet
-
-### Classe ImagePredictor
-
-```python
-class ImagePredictor:
-    def __init__(self, model_path, class_names)
-    def preprocess_image(self, image_path)
-    def preprocess_image_from_pil(self, pil_image)
-    def predict_single_image(self, image_path)
-    def predict_from_pil_image(self, pil_image)
-    def predict_from_folder(self, folder_path)
-```
-
-### Base de Données
-
-Le système utilise une base de données en mémoire simple. Pour la production, migrez vers :
-- PostgreSQL
-- MongoDB
-- SQLite avec SQLAlchemy
-
-## 🚀 Déploiement
-
-### Déploiement Local
+### Logs
 
 ```bash
-# Mode développement
-python app.py
+# Logs de l'application
+docker-compose logs afrifood-app
 
-# Mode production avec Gunicorn
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
-
-### Déploiement Cloud
-
-#### Heroku
-```bash
-# Fichier Procfile
-web: gunicorn app:app
-
-# Déploiement
-heroku create african-food-api
-git push heroku main
-```
-
-#### Docker
-```dockerfile
-FROM python:3.9-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY . .
-EXPOSE 5000
-
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
+# Logs en temps réel
+docker-compose logs -f
 ```
 
 ## 🔒 Sécurité
 
-### Recommandations pour la Production
+### Recommandations de Production
 
-1. **Clé secrète** : Utilisez une clé forte et unique
-2. **HTTPS** : Activez SSL/TLS
-3. **Base de données** : Migrez vers une DB sécurisée
-4. **Validation** : Renforcez la validation des fichiers
-5. **Rate limiting** : Limitez les requêtes par utilisateur
+1. **Variables d'environnement** :
+   ```bash
+   export SECRET_KEY=$(openssl rand -hex 32)
+   ```
+
+2. **Reverse Proxy** :
+   - Utilisez le profil production avec Nginx
+   - Configurez SSL/TLS
+
+3. **Base de données** :
+   - Sauvegardez régulièrement `afrifood.db`
+   - Considérez PostgreSQL pour la production
+
+## 📈 Performance
+
+### Optimisations
+
+- **Modèle** : Le modèle TensorFlow est chargé une seule fois au démarrage
+- **Base de données** : SQLite avec index automatiques
+- **Images** : Nettoyage automatique des fichiers temporaires
+
+### Limites
+
+- **Taille d'image** : Maximum 10MB
+- **Formats supportés** : JPG, PNG, JPEG, GIF
+- **Concurrent users** : Testé jusqu'à 50 utilisateurs simultanés
+
+## 🚀 Déploiement
+
+### Docker Hub
+
+```bash
+# Construire l'image
+docker build -t afrifood-ai:latest .
+
+# Pousser vers Docker Hub
+docker tag afrifood-ai:latest username/afrifood-ai:latest
+docker push username/afrifood-ai:latest
+```
+
+### Cloud Deployment
+
+#### AWS ECS
+```bash
+# Utiliser le docker-compose.yml avec AWS ECS CLI
+ecs-cli compose up
+```
+
+#### Google Cloud Run
+```bash
+# Déployer sur Cloud Run
+gcloud run deploy afrifood-ai --source .
+```
+
+#### Heroku
+```bash
+# Utiliser le Dockerfile
+heroku container:push web
+heroku container:release web
+```
+
+## 🐛 Dépannage
+
+### Problèmes Courants
+
+1. **Modèle non trouvé** :
+   ```bash
+   python create_dummy_model.py
+   ```
+
+2. **Erreur de permissions** :
+   ```bash
+   chmod +x run.sh
+   sudo chown -R $USER:$USER uploads/
+   ```
+
+3. **Port déjà utilisé** :
+   ```bash
+   # Changer le port dans docker-compose.yml
+   ports:
+     - "5001:5000"
+   ```
+
+4. **Mémoire insuffisante** :
+   ```bash
+   # Augmenter la mémoire Docker
+   # Docker Desktop > Settings > Resources > Memory
+   ```
+
+## 📝 API Documentation
+
+### Endpoints Principaux
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/` | GET | Page d'accueil |
+| `/register` | POST | Inscription |
+| `/login` | POST | Connexion |
+| `/predict` | POST | Analyse d'image |
+| `/health` | GET | Status de santé |
+
+### Exemple d'utilisation
 
 ```python
-# Exemple de configuration sécurisée
-import os
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+import requests
 
-app.secret_key = os.environ.get('SECRET_KEY')
-limiter = Limiter(
-    app,
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
-)
+# Connexion
+session = requests.Session()
+login_data = {'email': 'user@example.com', 'password': 'password'}
+session.post('http://localhost:5000/login', data=login_data)
+
+# Prédiction
+with open('image.jpg', 'rb') as f:
+    files = {'file': f}
+    response = session.post('http://localhost:5000/predict', files=files)
+    result = response.json()
+    print(f"Plat: {result['predicted_class']}")
 ```
 
 ## 🤝 Contribution
 
 1. Fork le projet
-2. Créez une branche (`git checkout -b feature/amelioration`)
-3. Committez vos changements (`git commit -m 'Ajout fonctionnalité'`)
-4. Push vers la branche (`git push origin feature/amelioration`)
-5. Ouvrez une Pull Request
+2. Créer une branche feature
+3. Tester avec Docker
+4. Soumettre une Pull Request
 
-## 📝 Licence
+## 📄 Licence
 
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
-
-## 🆘 Support
-
-Pour toute question ou problème :
-- Ouvrez une issue sur GitHub
-- Contactez l'équipe de développement
-- Consultez la documentation technique
-
-## 📊 Performances
-
-- **Précision du modèle** : 92%+ sur les plats testés
-- **Temps de réponse** : < 2 secondes par prédiction
-- **Formats supportés** : JPG, PNG, JPEG, GIF
-- **Taille max fichier** : 10MB (configurable)
+MIT License - voir le fichier LICENSE pour plus de détails.
 
 ---
 
